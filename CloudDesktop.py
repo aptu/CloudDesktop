@@ -1,14 +1,39 @@
 import argparse
 import sys
+import boto3
+import os
 
 class CloudDesktop:
     def __init__(self):
+        self.__ec2 = boto3.client('ec2')
         pass
+
+    def __create_keypair(self):
+        username = os.getlogin()
+        print("Logged user: " + username)
+        # The key-pair for each user saved in "Username.pm" file
+        filename = username + '.pem'
+        try:
+            keyfile = open(filename, 'r')
+            print('KeyPair already exists')
+        except IOError:
+            keypair = self.__ec2.create_key_pair(KeyName=username)
+            with open(filename, 'w') as keyfile:
+                keyfile.write(keypair['KeyMaterial'])
+                print('KeyPair created')
+
+    def __remove_keypair(self):
+        username = os.getlogin()
+        response = self.__ec2.delete_key_pair(KeyName=username)
+        print(response)
 
     def config(self, args):
+        self.__create_keypair()
         pass
 
+
     def reset(self, args):
+        self.__remove_keypair()
         pass
 
     def start(self, args):
