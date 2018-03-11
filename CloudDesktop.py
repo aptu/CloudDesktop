@@ -33,7 +33,7 @@ class CloudDesktop:
             print('KeyPair already exists')
         except IOError:
             keypair = self.__ec2.create_key_pair(KeyName=self.__username)
-            with open(elf.__key_filename, 'w') as keyfile:
+            with open(self.__key_filename, 'w') as keyfile:
                 keyfile.write(keypair['KeyMaterial'])
                 os.chmod(self.__key_filename, 0o600)
                 print('KeyPair created')
@@ -41,6 +41,7 @@ class CloudDesktop:
     def __remove_keypair(self):       
         response = self.__ec2.delete_key_pair(KeyName=self.__username)
         print(response)
+        os.remove(self.__key_filename)
 
     def config(self, args):
         self.__create_keypair()
@@ -110,7 +111,7 @@ class CloudDesktop:
         public_ip = vmdesc['PublicDnsName']
         pkgs_to_install = [ p['S'] for p in vmconfig['Packages']['L']]
         print("Installing packages %s in %s" % (pkgs_to_install, vmname))
-        remote_cmd = ['ssh', '-i', self.__key_filename, DEFAULT_USER + '@' + public_ip]
+        remote_cmd = ['ssh', '-i', self.__key_filename, '-o', 'StrictHostKeyChecking=no', DEFAULT_USER + '@' + public_ip]
         subprocess.call(remote_cmd + ['sudo', 'apt-get', 'update'])
         # cmd = ['ssh', '-i', self.__key_filename, 'ec2-user@'+public_ip, 'sudo', 'yum', 'install', '-y'] + pkgs_to_install
         cmd = remote_cmd + ['sudo', 'apt-get', 'install', '-y'] + pkgs_to_install
