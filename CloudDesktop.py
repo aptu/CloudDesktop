@@ -179,7 +179,15 @@ class CloudDesktop:
         
 
     def listAll(self, args):
-        pass
+        response = self.__ec2.describe_instances(Filters=[{'Name': 'key-name', 'Values' : [self.__username]}], MaxResults=100)
+        for reservation in response['Reservations']:
+            # print(reservation)
+            for instance in reservation['Instances']:
+                name_tag = ','.join(map(lambda x: x['Value'], filter(lambda x: x['Key'] == 'Name', instance['Tags'])))
+                
+                print(name_tag, instance['InstanceId'], instance['State']['Name'])
+           
+        
 
 def main():
     parser = argparse.ArgumentParser(description="Choose action")
@@ -200,8 +208,12 @@ def main():
 
     parser_connect = subparsers.add_parser('connect', help='Connect to vm')
     parser_connect.add_argument('--vm', dest='vm', help='VM to connect')
+
+    parser_listall = subparsers.add_parser('listAll', help='List all vms')
+    # parser_listall.add_argument('--vm', dest='vm', help='VM to connect')
     
     parser_reset = subparsers.add_parser('reset', help='Reset all configuration')
+
     args = parser.parse_args()
 #    print(args)
 
